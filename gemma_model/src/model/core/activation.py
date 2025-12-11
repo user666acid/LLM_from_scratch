@@ -16,7 +16,7 @@ class GELU(nn.Module):
             x: Исходное представление последовательности.
 
         Returns:
-            Преобразованное представление.
+            Активированное представление.
         """
         tanh_value = torch.tanh(torch.sqrt(torch.as_tensor(2 / np.pi)) * (x + 0.044715 * x ** 3))
         activation = 0.5 * x * (1 + tanh_value)
@@ -49,7 +49,7 @@ class GeGLU(nn.Module):
             x: Исходное представление последовательности.
 
         Returns:
-            Преобразованное представление.
+            Активированное представление.
         """
         activation = self.down(self.up(x) * self.activation(self.gate(x)))
         activation = self.dropout(activation)
