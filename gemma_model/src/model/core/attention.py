@@ -13,6 +13,19 @@ class MultiQueryAttention(nn.Module):
                  max_seq_len: int,
                  rope: RoPE,
                  dropout: float=0.1):
+        """Слой для MultiQueryAttention.
+        Вариация MHA, призванная повысить эффективность (в частности, уменьшить размер KV-кэша).
+        Матрицы запросов уникальны для каждой головы внимания.
+        Матрицы ключей и значений являются общими для все голов.
+
+        Args:
+            num_q_heads: Количество голов внимания для запросов.
+            emb_size: Размерность внутреннего представления.
+            head_size: Размерность головы внимания.
+            max_seq_len: Максимальная длина последовательности.
+            rope: Объект для слоя позиционного кодирования RoPE.
+            dropout: Доля зануляемых элементов.
+        """
         super().__init__()
         
         self.num_q_heads = num_q_heads
@@ -37,8 +50,17 @@ class MultiQueryAttention(nn.Module):
                                      V: torch.Tensor,
                                      cache: Optional[Tuple[torch.Tensor, torch.Tensor]]
                                      ) -> torch.Tensor:
-        '''
-        '''
+        """Вычисление матрицы внимания.
+
+        Args:
+            Q: Матрица запросов.
+            K: Матрица ключей.
+            V: Матрица значений.
+            cache: Содержит предпосчитанные матрицы ключей и значений.
+
+        Returns:
+            Взвешанные по вниманию значения.
+        """
         _, _, seq_len, _ = Q.shape
         
         attn_scores = torch.matmul(Q, K.transpose(-2, -1))
@@ -57,8 +79,16 @@ class MultiQueryAttention(nn.Module):
                 use_cache: bool=True,
                 cache: Optional[Tuple[torch.Tensor, torch.Tensor]]=None
                 ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
-        '''
-        '''
+        """Определяет логику вычислений в слое.
+
+        Args:
+            x: Исходное представление последовательности.
+            use_cache: Флаг, контролирующий использование KV-кэша.
+            cache: Содержит предпосчитанные матрицы ключей и значений.
+
+        Returns:
+            Преобразованное представление, KV-кэш.
+        """
         batch_size, seq_len, _ = x.size()
         
         Q = self.W_q(x).reshape(batch_size, seq_len, self.num_q_heads, self.head_size).transpose(1, 2)

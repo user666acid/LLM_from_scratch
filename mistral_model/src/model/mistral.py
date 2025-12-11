@@ -104,7 +104,7 @@ class Mistral(nn.Module):
 
             if do_sample:
                 logits_sampled = self.sample_logits(logits_last, top_k, top_p)
-                probs = torch.softmax(logits_last, dim=-1)
+                probs = torch.softmax(logits_sampled, dim=-1)
                 next_token = torch.multinomial(probs, num_samples=1)
             else:
                 probs = torch.softmax(logits_last, dim=-1)
@@ -117,7 +117,7 @@ class Mistral(nn.Module):
     def sample_logits(self,
                       logits: torch.Tensor,
                       top_k: Optional[int],
-                      top_p: Optinal[float]) -> torch.Tensor:
+                      top_p: Optional[float]) -> torch.Tensor:
         '''
         '''
         if top_k:
@@ -146,9 +146,6 @@ class Mistral(nn.Module):
 
         optimizer = torch.optim.Adam(self.parameters(), lr=learning_rate)
         criterion = torch.nn.CrossEntropyLoss()
-
-        train_losses = torch.zeros(num_epoch)
-        valid_losses = torch.zeros(num_epoch)
 
         for i in range(num_epoch):
 
