@@ -16,6 +16,16 @@ class Decoder(nn.Module):
                  max_seq_len: int,
                  rope: RoPE, 
                  dropout: float=0.1):
+        """Блок декодера модели.
+
+        Args:
+            num_heads: Количество голов внимания.
+            emb_size: Размерность внутреннего представления.
+            head_size: Размерность головы внимания.
+            max_seq_len: Максимальная длина последовательности.
+            rope: Объект для слоя позиционного кодирования RoPE.
+            dropout: Доля зануляемых элементов.
+        """
         super().__init__()
         
         self.num_heads = num_heads
@@ -34,8 +44,18 @@ class Decoder(nn.Module):
                 use_cache: bool=True,
                 cache: Optional[Tuple[torch.Tensor, torch.Tensor]]=None
                 ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
-        '''
-        '''
+        """
+        Определяет логику вычислений в блоке декодера.
+        Используется pre-layer нормализация, GQA, остаточная связь и полносвязный слой.
+
+        Args:
+            x: Исходное представление последовательности.
+            use_cache: Флаг, контролирующий использование KV-кэша.
+            cache: Содержит предпосчитанные матрицы ключей и значений.
+
+        Returns:
+            Преобразованное представление, KV-кэши.
+        """
         attn_outputs, cache = self.multihead_attn(self.norm_1(x), use_cache, cache)
         
         x = x + attn_outputs

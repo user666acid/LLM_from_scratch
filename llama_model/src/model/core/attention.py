@@ -11,6 +11,14 @@ class HeadAttention(nn.Module):
                  head_size: int,
                  max_seq_len: int,
                  rope: RoPE):
+        """Слой для HeadAttention.
+
+        Args:
+            emb_size: Размерность внутреннего представления.
+            head_size: Размерность головы внимания.
+            max_seq_len: Максимальная длина последовательности.
+            rope: Объект для слоя позиционного кодирования RoPE.
+        """
         super().__init__()
 
         self.emb_size = emb_size
@@ -24,13 +32,52 @@ class HeadAttention(nn.Module):
         self.W_v = nn.Linear(emb_size, head_size)
         self.mask = torch.tril(torch.ones(max_seq_len, max_seq_len))
 
+    def scaled_dot_product_attention(self,
+                                     Q: torch.Tensor,
+                                     K: torch.Tensor,
+                                     V: torch.Tensor,
+                                     cache: Optional[Tuple[torch.Tensor, torch.Tensor]]
+                                     ) -> torch.Tensor:
+        """Вычисление матрицы внимания.
+
+        Args:
+            Q: Матрица запросов.
+            K: Матрица ключей.
+            V: Матрица значений.
+            cache: Содержит предпосчитанные матрицы ключей и значений.
+
+        Returns:
+            Взвешанные по вниманию значения.
+        """
+        _, seq_len, _ = Q.shape
+
+        attn_scores = torch.matmul(Q, K.transpose(-2, -1))
+        attn_scores = attn_scores / self.head_size ** 0.5
+
+        if not cache:
+            mask = (self.mask[:seq_len, :seq_len] == 0)
+            attn_scores = attn_scores.masked_fill(mask, float('-Inf'))
+
+        attn_weights = torch.softmax(attn_scores, dim=-1)
+        weighted_values = torch.matmul(attn_weights, V)
+
+        return weighted_values
+
     def forward(self,
                 x: torch.Tensor,
                 use_cache: bool=True,
                 cache: Optional[Tuple[torch.Tensor, torch.Tensor]]=None
-                ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]
-        '''
-        '''
+                ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
+        """Определяет логику вычислений в слое.
+
+        Args:
+            x: Исходное представление последовательности.
+            use_cache: Флаг, контролирующий использование KV-кэша.
+            cache: Содержит предпосчитанные матрицы ключей и значений.
+
+        Returns:
+            Преобразованное представление, KV-кэш.
+        """
         K = self.W_k(x)
         Q = self.W_q(x)
         V = self.W_v(x)
@@ -55,28 +102,6 @@ class HeadAttention(nn.Module):
         
         return (attn, cache)
 
-    def scaled_dot_product_attention(self,
-                                     Q: torch.Tensor,
-                                     K: torch.Tensor,
-                                     V: torch.Tensor,
-                                     cache: Optional[Tuple[torch.Tensor, torch.Tensor]]
-                                     ) -> torch.Tensor:
-        '''
-        '''
-        _, seq_len, _ = Q.shape
-        
-        attn_scores = torch.matmul(Q, K.transpose(-2, -1))
-        attn_scores = attn_scores / self.head_size ** 0.5
-        
-        if not cache:
-            mask = (self.mask[:seq_len, :seq_len] == 0)
-            attn_scores = attn_scores.masked_fill(mask, float('-Inf'))
-
-        attn_weights = torch.softmax(attn_scores, dim=-1)
-        weighted_values = torch.matmul(attn_weights, V)
-
-        return weighted_values
-
 class MultiHeadAttention(nn.Module):
     def __init__(self,
                  num_heads:int,
@@ -85,6 +110,16 @@ class MultiHeadAttention(nn.Module):
                  max_seq_len: int,
                  rope: RoPE,
                  dropout: float=0.1):
+        """Слой для MultiHeadAttention.
+
+        Args:
+            num_heads: Количество голов внимания.
+            emb_size: Размерность внутреннего представления.
+            head_size: Размерность головы внимания.
+            max_seq_len: Максимальная длина последовательности.
+            rope: Объект для слоя позиционного кодирования RoPE.
+            dropout: Доля зануляемых элементов.
+        """
         super().__init__()
         
         self.num_heads = num_heads
@@ -102,8 +137,16 @@ class MultiHeadAttention(nn.Module):
                 use_cache: bool=True,
                 cache: Optional[List[Tuple[torch.Tensor, torch.Tensor]]]=None
                 ) -> Tuple[torch.Tensor, Optional[List[Tuple[torch.Tensor, torch.Tensor]]]]:
-        '''
-        '''
+        """Определяет логику вычислений в слое.
+
+        Args:
+            x: Исходное представление последовательности.
+            use_cache: Флаг, контролирующий использование KV-кэша.
+            cache: Содержит предпосчитанные матрицы ключей и значений.
+
+        Returns:
+            Преобразованное представление, KV-кэш.
+        """
         if use_cache:
             attn_outputs = []
             current_cache = []
