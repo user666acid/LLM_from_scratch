@@ -45,7 +45,7 @@ class Decoder(nn.Module):
                 cache: Optional[Tuple[torch.Tensor, torch.Tensor]]=None
                 ) -> Tuple[torch.Tensor, Optional[Tuple[torch.Tensor, torch.Tensor]]]:
         """Определяет логику вычислений в блоке декодера.
-        Используется pre-layer нормализация, RoPE, MHA с KV-кэшированием, остаточная связь и полносвязный слой.
+        Используется pre-layer нормализация, RoPE, MHA с KV-кэшированием, остаточная связь и SwiGLU.
 
         Args:
             x: Исходное представление последовательности.
