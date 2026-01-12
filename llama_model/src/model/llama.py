@@ -19,7 +19,7 @@ class Llama(nn.Module):
                  dropout: float=0.1,
                  device: str='cpu'):
         """Модель Llama
-        -
+
         Args:
             vocab_size: Размерность словаря модели.
             max_seq_len: Максимальная длина последовательности.

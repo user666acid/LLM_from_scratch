@@ -22,7 +22,7 @@ class Mixtral(nn.Module):
                  dropout: float=0.1,
                  window_size: int=4096,
                  device: str='cpu'):
-        """Модель Mistral
+        """Модель Mixtral
 
         Args:
             vocab_size: Размерность словаря модели.

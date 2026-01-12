@@ -8,7 +8,7 @@ class RoPE(nn.Module):
                  head_size: int,
                  max_seq_len: int,
                  base: int=10000):
-        """Слой для кодирование относительных позиций элементов последовательности через Rotary Positional Embeddings.
+        """Слой для кодирования относительных позиций элементов последовательности через Rotary Positional Embeddings.
 
         Args:
             head_size: Размерность головы внимания.

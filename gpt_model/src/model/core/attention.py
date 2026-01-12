@@ -6,6 +6,13 @@ class HeadAttention(nn.Module):
                  emb_size: int,
                  head_size: int,
                  max_seq_len: int):
+        """Слой для HeadAttention.
+
+        Args:
+            emb_size: Размерность внутреннего представления.
+            head_size: Размерность головы внимания.
+            max_seq_len: Максимальная длина последовательности.
+        """
         super().__init__()
 
         self.emb_size = emb_size
@@ -18,23 +25,20 @@ class HeadAttention(nn.Module):
 
         self.mask = torch.tril(torch.ones(max_seq_len, max_seq_len))
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        '''
-        '''
-        K = self.W_k(x)
-        Q = self.W_q(x)
-        V = self.W_v(x)
-
-        attn = self.scaled_dot_product_attention(Q, K, V)
-
-        return attn
-
     def scaled_dot_product_attention(self,
                                      Q: torch.Tensor,
                                      K: torch.Tensor,
                                      V: torch.Tensor) -> torch.Tensor:
-        '''
-        '''
+        """Вычисление матрицы внимания.
+
+        Args:
+            Q: Матрица запросов.
+            K: Матрица ключей.
+            V: Матрица значений.
+
+        Returns:
+            Взвешанные по вниманию значения.
+        """
         _, seq_len, _ = Q.shape
         
         attn_scores = torch.matmul(Q, K.transpose(-2, -1))
@@ -48,6 +52,23 @@ class HeadAttention(nn.Module):
 
         return weighted_values
 
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """Определяет логику вычислений в слое.
+
+        Args:
+            x: Исходное представление последовательности.
+
+        Returns:
+            Преобразованное представление.
+        """
+        K = self.W_k(x)
+        Q = self.W_q(x)
+        V = self.W_v(x)
+
+        attn = self.scaled_dot_product_attention(Q, K, V)
+
+        return attn
+
 class MultiHeadAttention(nn.Module):
     def __init__(self,
                  num_heads:int,
@@ -55,6 +76,15 @@ class MultiHeadAttention(nn.Module):
                  head_size: int,
                  max_seq_len: int,
                  dropout: float=0.1):
+        """Слой для MultiHeadAttention.
+
+        Args:
+            num_heads: Количество голов внимания.
+            emb_size: Размерность внутреннего представления.
+            head_size: Размерность головы внимания.
+            max_seq_len: Максимальная длина последовательности.
+            dropout: Доля зануляемых элементов.
+        """
         super().__init__()
         
         self.num_heads = num_heads
@@ -68,8 +98,14 @@ class MultiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:   
-        '''
-        '''     
+        """Определяет логику вычислений в слое.
+
+        Args:
+            x: Исходное представление последовательности.
+
+        Returns:
+            Преобразованное представление.
+        """
         attn_outputs = torch.cat([head(x) for head in self.attn_heads], dim=-1)
         attn_outputs = self.W_o(attn_outputs)
         attn_outputs = self.dropout(attn_outputs)

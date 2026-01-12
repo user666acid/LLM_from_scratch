@@ -11,6 +11,15 @@ class Decoder(nn.Module):
                  head_size: int,
                  max_seq_len: int,
                  dropout: float=0.1):
+        """Блок декодера модели.
+
+        Args:
+            num_heads: Количество голов внимания.
+            emb_size: Размерность внутреннего представления.
+            head_size: Размерность головы внимания.
+            max_seq_len: Максимальная длина последовательности.
+            dropout: Доля зануляемых элементов.
+        """
         super().__init__()
         
         self.num_heads = num_heads
@@ -25,8 +34,16 @@ class Decoder(nn.Module):
         self.norm_2 = nn.LayerNorm(emb_size)
         
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        '''
-        '''
+        """
+        Определяет логику вычислений в блоке декодера.
+        Используется post-layer нормализация, MHA, остаточная связь и полносвязный слой.
+
+        Args:
+            x: Исходное представление последовательности.
+
+        Returns:
+            Преобразованное представление.
+        """
         x = self.norm_1(x + self.multihead_attn(x))
         x = self.norm_2(x + self.ffn(x))
         
